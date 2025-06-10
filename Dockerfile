@@ -1,6 +1,6 @@
 ARG UBUNTU_VERSION=22.04
 # This needs to generally match the container host's environment.
-ARG CUDA_VERSION=12.2.0 # Changed to 12.2.0
+ARG CUDA_VERSION=12.2.0
 # Target the CUDA build image
 ARG BASE_CUDA_DEV_CONTAINER=nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION}
 
@@ -29,7 +29,8 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY . .
+# Clone the llama.cpp repository
+RUN git clone https://github.com/ggerganov/llama.cpp.git .
 
 # Build llama.cpp
 RUN if [ "${CUDA_DOCKER_ARCH}" != "default" ]; then \
@@ -38,11 +39,14 @@ RUN if [ "${CUDA_DOCKER_ARCH}" != "default" ]; then \
     cmake -B build -DGGML_NATIVE=OFF -DGGML_CUDA=ON -DGGML_BACKEND_DL=ON -DGGML_CPU_ALL_VARIANTS=ON -DLLAMA_BUILD_TESTS=OFF ${CMAKE_ARGS} -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined . && \
     cmake --build build --config Release -j$(nproc)
 
-# Copy built binaries and shared libraries directly to /app
+# Copy built binaries and shared libraries directly to /app (from the build directory)
 RUN cp build/bin/* /app/ && \
     find build -name "*.so" -exec cp {} /app \;
 
-# Copy Python scripts and requirements
+# The following lines assume certain files/directories like gguf-py, requirements, requirements.txt, and .devops/tools.sh
+# are part of the cloned llama.cpp repository structure.
+# If they are NOT, you will need to add `COPY` commands for them from your local context.
+# Assuming they ARE part of the llama.cpp repo:
 RUN cp *.py /app/ && \
     cp -r gguf-py /app/ && \
     cp -r requirements /app/ && \
