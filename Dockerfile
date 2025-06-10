@@ -43,17 +43,10 @@ RUN if [ "${CUDA_DOCKER_ARCH}" != "default" ]; then \
 RUN cp build/bin/* /app/ && \
     find build -name "*.so" -exec cp {} /app \;
 
-# The following lines assume certain files/directories like gguf-py, requirements, requirements.txt, and .devops/tools.sh
-# are part of the cloned llama.cpp repository structure.
-# If they are NOT, you will need to add `COPY` commands for them from your local context.
-# Assuming they ARE part of the llama.cpp repo:
-RUN cp *.py /app/ && \
-    cp -r gguf-py /app/ && \
-    cp -r requirements /app/ && \
-    cp requirements.txt /app/ && \
-    cp .devops/tools.sh /app/tools.sh
+# Only copy tools.sh, as other files are already present from the git clone
+RUN cp .devops/tools.sh /app/tools.sh
 
-# Install Python dependencies
+# Install Python dependencies (requirements.txt is already in /app from the clone)
 RUN pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
@@ -65,5 +58,3 @@ RUN apt-get autoremove -y && \
     find /var/cache -type f -delete
 
 WORKDIR /app
-
-ENTRYPOINT ["/app/tools.sh"]
