@@ -23,7 +23,7 @@ jobs:
         with:
           images: |
             tuftsttsrt/llama.cpp
-          tags: full-cuda-b5590
+          tags: full-cuda-b5627
       - name: Build & Publish Docker Image
         uses: docker/build-push-action@v5
         with:
